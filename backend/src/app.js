@@ -1,9 +1,16 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const cookieParser = require("cookie-parser");
-const rateLimit = require("express-rate-limit");
-const morgan = require("morgan");
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
+import morgan from "morgan";
+
+import { authRoutes } from "./routes/auth.routes.js";
+import { patientRoutes } from "./routes/patients.routes.js";
+import assessmentRoutes from "./routes/assessments.routes.js";
+import { conferenceRoutes } from "./routes/conference.routes.js";
+import { exportRoutes } from "./routes/export.routes.js";
+import { auth } from "./middleware/auth.js";
 
 function createApp(env) {
   const app = express();
@@ -25,13 +32,24 @@ function createApp(env) {
     max: 50
   });
 
-  app.use("/api/auth", loginLimiter);
+  app.get("/", (req, res) => {
+    res.send("RAD-PAL-QOL backend is running");
+  });
 
   app.get("/health", (req, res) => {
-    res.json({ ok: true, project: "RAD-PAL-QOL Study Backend" });
+    res.json({
+      ok: true,
+      project: "RAD-PAL-QOL Study Backend"
+    });
   });
+
+  app.use("/api/auth", loginLimiter, authRoutes(env));
+  app.use("/api/patients", auth(env), patientRoutes());
+  app.use("/api/assessments", auth(env), assessmentRoutes);
+  app.use("/api/conference-records", auth(env), conferenceRoutes());
+  app.use("/api/export", auth(env), exportRoutes(env));
 
   return app;
 }
 
-module.exports = { createApp };
+export { createApp };
