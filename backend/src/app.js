@@ -33,7 +33,7 @@ function createApp(env) {
 
   app.use(
     cors({
-      origin: function (origin, callback) {
+      origin(origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
           callback(null, true);
         } else {
@@ -46,7 +46,9 @@ function createApp(env) {
 
   const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 50
+    max: 50,
+    standardHeaders: true,
+    legacyHeaders: false
   });
 
   app.get("/", (req, res) => {
@@ -65,6 +67,17 @@ function createApp(env) {
   app.use("/api/assessments", auth(env), assessmentRoutes);
   app.use("/api/conference-records", auth(env), conferenceRoutes());
   app.use("/api/export", auth(env), exportRoutes(env));
+
+  app.use((err, req, res, next) => {
+    if (err.message?.startsWith("Not allowed by CORS")) {
+      return res.status(403).json({ message: err.message });
+    }
+
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message
+    });
+  });
 
   return app;
 }

@@ -21,6 +21,7 @@ function computeEsas(values) {
   const maxScore = Math.max(...scores);
 
   let severity = "";
+
   if (maxScore >= 1 && maxScore <= 3) severity = "Mild";
   else if (maxScore >= 4 && maxScore <= 6) severity = "Moderate";
   else if (maxScore >= 7) severity = "Severe";
@@ -32,4 +33,4 @@ function computeEsas(values) {
   };
 }
 
-module.exports = { computeEsas };
+export { computeEsas };

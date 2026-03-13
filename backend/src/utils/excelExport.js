@@ -1,4 +1,4 @@
-const ExcelJS = require("exceljs");
+import ExcelJS from "exceljs";
 
 function formatDate(value) {
   if (!value) return "";
@@ -99,7 +99,4 @@ async function buildDatasetExcel(rows) {
   return workbook;
 }
 
-module.exports = {
-  buildDatasetExcel,
-  formatDate
-};
+export { buildDatasetExcel, formatDate };

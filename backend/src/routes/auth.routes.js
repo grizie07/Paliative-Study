@@ -50,7 +50,7 @@ function authRoutes(env) {
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         sameSite: "lax",
-        secure: false
+        secure: env.NODE_ENV === "production"
       });
 
       return res.json({

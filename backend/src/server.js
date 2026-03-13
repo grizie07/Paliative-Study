@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
-import mongoose from "mongoose";
 import { createApp } from "./app.js";
+import { connectDB } from "./config/db.js";
 
 dotenv.config();
 
@@ -29,8 +29,7 @@ async function startServer() {
       throw new Error("JWT_REFRESH_SECRET is missing in backend/.env");
     }
 
-    await mongoose.connect(env.MONGODB_URI);
-    console.log("MongoDB connected");
+    await connectDB(env.MONGODB_URI);
 
     const app = createApp(env);
 

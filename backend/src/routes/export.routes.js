@@ -227,7 +227,8 @@ function exportRoutes(env) {
           Number(a.esas?.shortnessOfBreath || 0) +
           Number(a.esas?.depression || 0) +
           Number(a.esas?.anxiety || 0) +
-          Number(a.esas?.wellbeing || 0);
+          Number(a.esas?.wellbeing || 0) +
+          Number(a.esas?.otherProblem || 0);
 
         sheet.addRow({
           assessmentId: a._id?.toString() || "",
