@@ -12,6 +12,7 @@ export default function Login() {
     email: "",
     password: "",
   });
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,11 +22,14 @@ export default function Login() {
     setError("");
 
     try {
-      const res = await api.post("/auth/login", form);
+      const res = await api.post("/api/auth/login", form);
       login(res.data);
       navigate("/");
     } catch (err) {
-      setError(err?.response?.data?.message || "Invalid credentials. Please check your email and password.");
+      setError(
+        err?.response?.data?.message ||
+          "Invalid credentials. Please check your email and password."
+      );
     } finally {
       setLoading(false);
     }
@@ -38,7 +42,9 @@ export default function Login() {
       </div>
 
       <h1 className="login-title">RAD-PAL-QOL Study System</h1>
-      <p className="login-subtitle">Palliative Care Quality-of-Life Research Platform</p>
+      <p className="login-subtitle">
+        Palliative Care Quality-of-Life Research Platform
+      </p>
 
       <div className="login-card">
         <h2>Researcher / Clinician Sign In</h2>
@@ -49,9 +55,11 @@ export default function Login() {
             <label>Email Address</label>
             <input
               type="email"
-              placeholder="doctor@radpalqol.org"
+              placeholder="doctor@example.com"
               value={form.email}
-              onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, email: e.target.value }))
+              }
             />
           </div>
 
@@ -62,7 +70,9 @@ export default function Login() {
                 type="password"
                 placeholder="••••••••••"
                 value={form.password}
-                onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, password: e.target.value }))
+                }
               />
               <Eye size={18} className="eye-icon" />
             </div>
@@ -76,7 +86,10 @@ export default function Login() {
         </form>
       </div>
 
-      <p className="login-footer">© 2024 RAD-PAL-QOL Study. All rights reserved. For internal research use only.</p>
+      <p className="login-footer">
+        © 2026 RAD-PAL-QOL Study. All rights reserved. For internal research use
+        only.
+      </p>
     </div>
   );
-}
+} 

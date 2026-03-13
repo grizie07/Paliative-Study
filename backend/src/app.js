@@ -15,6 +15,17 @@ import { auth } from "./middleware/auth.js";
 function createApp(env) {
   const app = express();
 
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "https://paliative-study.vercel.app",
+    "https://paliative-study-git-main-grizie07s-projects.vercel.app",
+    "https://paliative-study-hy619hm23-grizie07s-projects.vercel.app"
+  ];
+
+  if (env.CORS_ORIGIN) {
+    allowedOrigins.push(env.CORS_ORIGIN);
+  }
+
   app.use(helmet());
   app.use(morgan("dev"));
   app.use(express.json({ limit: "2mb" }));
@@ -22,7 +33,13 @@ function createApp(env) {
 
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Not allowed by CORS: ${origin}`));
+        }
+      },
       credentials: true
     })
   );
