@@ -1,66 +1,73 @@
+import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import dotenv from "dotenv";
-import readline from "readline";
-
 import User from "../src/models/User.js";
 
 dotenv.config();
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-function ask(question) {
+async function prompt(question) {
+  process.stdout.write(question);
   return new Promise((resolve) => {
-    rl.question(question, (answer) => resolve(answer.trim()));
+    process.stdin.once("data", (data) => resolve(String(data).trim()));
   });
 }
 
-async function createUser() {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log("MongoDB connected\n");
+async function main() {
+  const roleArg = (process.argv[2] || "admin").toLowerCase();
+  const role = roleArg === "doctor" ? "doctor" : "admin";
 
-    const name = await ask("Enter name: ");
-    const email = await ask("Enter email: ");
-    const password = await ask("Enter password: ");
-    const role = await ask("Enter role (admin/doctor): ");
-
-    const existing = await User.findOne({ email });
-
-    if (existing) {
-      console.log("\nUser already exists with this email.");
-      process.exit(0);
-    }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    const user = new User({
-      name,
-      email,
-      passwordHash,
-      role,
-      isActive: true
-    });
-
-    await user.save();
-
-    console.log("\nUser created successfully:");
-    console.log({
-      name,
-      email,
-      role
-    });
-
-    rl.close();
-    process.exit(0);
-
-  } catch (error) {
-    console.error(error);
+  const MONGODB_URI = process.env.MONGODB_URI;
+  if (!MONGODB_URI) {
+    console.error("MONGODB_URI missing in .env");
     process.exit(1);
   }
+
+  await mongoose.connect(MONGODB_URI);
+  console.log("MongoDB connected");
+
+  const name = await prompt("Name: ");
+  const email = (await prompt("Email: ")).toLowerCase().trim();
+  const password = await prompt("Password (min 8 chars): ");
+
+  if (!name || !email || password.length < 8) {
+    console.error("Invalid input. Ensure name/email are provided and password is at least 8 characters.");
+    await mongoose.disconnect();
+    process.exit(1);
+  }
+
+  const existing = await User.findOne({ email });
+  if (existing) {
+    console.error("User already exists with this email.");
+    await mongoose.disconnect();
+    process.exit(1);
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  const user = await User.create({
+    name: name.trim(),
+    email,
+    passwordHash,
+    role,
+    isActive: true
+  });
+
+  console.log(`${role.toUpperCase()} user created successfully`);
+  console.log({
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    role: user.role
+  });
+
+  await mongoose.disconnect();
+  process.exit(0);
 }
 
-createUser();
+main().catch(async (error) => {
+  console.error("Error:", error.message);
+  try {
+    await mongoose.disconnect();
+  } catch {}
+  process.exit(1);
+});

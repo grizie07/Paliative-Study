@@ -1,7 +1,9 @@
-require("dotenv").config();
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const User = require("../src/models/User");
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
+import User from "../src/models/User.js";
+
+dotenv.config();
 
 async function prompt(question) {
   process.stdout.write(question);
@@ -14,13 +16,13 @@ async function main() {
   const roleArg = (process.argv[2] || "admin").toLowerCase();
   const role = roleArg === "doctor" ? "doctor" : "admin";
 
-  const MONGO_URI = process.env.MONGO_URI;
-  if (!MONGO_URI) {
-    console.error("MONGO_URI missing in .env");
+  const MONGODB_URI = process.env.MONGODB_URI;
+  if (!MONGODB_URI) {
+    console.error("MONGODB_URI missing in .env");
     process.exit(1);
   }
 
-  await mongoose.connect(MONGO_URI);
+  await mongoose.connect(MONGODB_URI);
   console.log("MongoDB connected");
 
   const name = await prompt("Name: ");
@@ -29,12 +31,14 @@ async function main() {
 
   if (!name || !email || password.length < 8) {
     console.error("Invalid input. Ensure name/email are provided and password is at least 8 characters.");
+    await mongoose.disconnect();
     process.exit(1);
   }
 
   const existing = await User.findOne({ email });
   if (existing) {
     console.error("User already exists with this email.");
+    await mongoose.disconnect();
     process.exit(1);
   }
 

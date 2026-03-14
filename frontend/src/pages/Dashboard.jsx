@@ -16,8 +16,7 @@ export default function Dashboard() {
     const run = async () => {
       try {
         const res = await api.get("/patients");
-        const patientData = Array.isArray(res.data) ? res.data : [];
-        setPatients(patientData);
+        setPatients(Array.isArray(res.data) ? res.data : []);
         setError("");
       } catch (err) {
         console.error("Failed to fetch patients:", err);
@@ -36,11 +35,16 @@ export default function Dashboard() {
         subtitle={`Welcome back, ${user?.name || "Doctor"} · ${user?.role || "doctor"}`}
       />
 
-      {error && (
-        <div className="panel" style={{ marginBottom: "16px", color: "crimson" }}>
-          <p>{error}</p>
+      {error ? (
+        <div className="panel">
+          <div className="panel-head">
+            <h3>Load Error</h3>
+          </div>
+          <div className="status-box">
+            <p>{error}</p>
+          </div>
         </div>
-      )}
+      ) : null}
 
       <div className="stats-grid">
         <StatCard label="Total Patients" value={patients.length} icon={<Users size={24} />} tone="blue" />
