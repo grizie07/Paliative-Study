@@ -10,14 +10,22 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [patients, setPatients] = useState([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const run = async () => {
       try {
         const res = await api.get("/patients");
-        setPatients(res.data || []);
-      } catch {}
+        const patientData = Array.isArray(res.data) ? res.data : [];
+        setPatients(patientData);
+        setError("");
+      } catch (err) {
+        console.error("Failed to fetch patients:", err);
+        setPatients([]);
+        setError(err.response?.data?.message || "Failed to load patients");
+      }
     };
+
     run();
   }, []);
 
@@ -27,6 +35,12 @@ export default function Dashboard() {
         title="Dashboard"
         subtitle={`Welcome back, ${user?.name || "Doctor"} · ${user?.role || "doctor"}`}
       />
+
+      {error && (
+        <div className="panel" style={{ marginBottom: "16px", color: "crimson" }}>
+          <p>{error}</p>
+        </div>
+      )}
 
       <div className="stats-grid">
         <StatCard label="Total Patients" value={patients.length} icon={<Users size={24} />} tone="blue" />
@@ -68,14 +82,20 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {patients.slice(0, 5).map((p) => (
-                <tr key={p._id}>
-                  <td>{p.uhid}</td>
-                  <td>{p.patientName}</td>
-                  <td>{p.age}</td>
-                  <td>{p.primaryDiagnosis}</td>
+              {patients.length > 0 ? (
+                patients.slice(0, 5).map((p) => (
+                  <tr key={p._id}>
+                    <td>{p.uhid}</td>
+                    <td>{p.patientName}</td>
+                    <td>{p.age}</td>
+                    <td>{p.primaryDiagnosis}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4">No patients found</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
