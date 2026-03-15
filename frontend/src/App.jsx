@@ -6,6 +6,7 @@ import AppShell from "./components/layout/AppShell";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import PatientsPage from "./pages/PatientsPage";
+import PatientCreatePage from "./pages/PatientCreatePage";
 import PatientDetailsPage from "./pages/PatientDetailsPage";
 import AssessmentCreatePage from "./pages/AssessmentCreatePage";
 import ConferenceCreatePage from "./pages/ConferenceCreatePage";
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/" element={<ShellPage><Dashboard /></ShellPage>} />
           <Route path="/dashboard" element={<ShellPage><Dashboard /></ShellPage>} />
           <Route path="/patients" element={<ShellPage><PatientsPage /></ShellPage>} />
+          <Route path="/patients/new" element={<ShellPage><PatientCreatePage /></ShellPage>} />
           <Route path="/patients/:id" element={<ShellPage><PatientDetailsPage /></ShellPage>} />
           <Route path="/patients/:id/assessment/new" element={<ShellPage><AssessmentCreatePage /></ShellPage>} />
           <Route path="/patients/:id/conference/new" element={<ShellPage><ConferenceCreatePage /></ShellPage>} />
