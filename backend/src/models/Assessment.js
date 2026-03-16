@@ -75,8 +75,19 @@ const AssessmentSchema = new mongoose.Schema(
     },
 
     radiologyConference: { type: Object, default: {} },
+
+    postDircQlqC30: {
+      type: qlqC30Schema,
+      default: () => ({})
+    },
+
+    postDircEsas: {
+      type: esasSchema,
+      default: () => ({})
+    },
+
     postConferenceOutcomes: { type: Object, default: {} },
-    postRadioConferenceAssessment: { type: Object, default: {} },
+
     summary: { type: Object, default: {} },
 
     notes: { type: String, default: "" }

@@ -34,6 +34,7 @@ export default function App() {
           <Route path="/patients/:id" element={<ShellPage><PatientDetailsPage /></ShellPage>} />
           <Route path="/patients/:id/assessment/new" element={<ShellPage><AssessmentCreatePage /></ShellPage>} />
           <Route path="/patients/:id/conference/new" element={<ShellPage><ConferenceCreatePage /></ShellPage>} />
+          <Route path="/assessments/:assessmentId/edit" element={<ShellPage><AssessmentCreatePage /></ShellPage>} />
           <Route path="/assessment/new" element={<ShellPage><AssessmentCreatePage /></ShellPage>} />
           <Route path="/export" element={<ShellPage><ExportPage /></ShellPage>} />
         </Routes>

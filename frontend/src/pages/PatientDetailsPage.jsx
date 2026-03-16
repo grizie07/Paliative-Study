@@ -3,18 +3,50 @@ import { useNavigate, useParams } from "react-router-dom";
 import PageHeader from "../components/common/PageHeader";
 import api from "../services/api";
 
+function computeEsasTotal(esas = {}) {
+  return [
+    esas.pain,
+    esas.tiredness,
+    esas.drowsiness,
+    esas.nausea,
+    esas.appetite,
+    esas.shortnessOfBreath,
+    esas.depression,
+    esas.anxiety,
+    esas.wellbeing,
+    esas.otherProblem
+  ].reduce((sum, value) => sum + Number(value || 0), 0);
+}
+
+function computeQlqTotal(qlq = {}) {
+  return Array.from({ length: 30 }, (_, i) => i + 1).reduce((sum, n) => {
+    return sum + Number(qlq[`q${n}`] || 0);
+  }, 0);
+}
+
 export default function PatientDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const run = async () => {
-      const res = await api.get(`/patients/${id}`);
-      setData(res.data);
+      try {
+        const res = await api.get(`/patients/${id}`);
+        setData(res.data);
+        setError("");
+      } catch (err) {
+        setError(err?.response?.data?.message || "Failed to load patient details.");
+      }
     };
+
     run();
   }, [id]);
+
+  if (error) {
+    return <div className="page"><div className="error-box">{error}</div></div>;
+  }
 
   if (!data) return <div className="page">Loading...</div>;
 
@@ -27,10 +59,16 @@ export default function PatientDetailsPage() {
         subtitle={`${patient.patientName} · ${patient.uhid}`}
         actions={
           <div className="page-actions">
-            <button className="primary-btn" onClick={() => navigate(`/patients/${id}/assessment/new`)}>
+            <button
+              className="primary-btn"
+              onClick={() => navigate(`/patients/${id}/assessment/new`)}
+            >
               Add Assessment
             </button>
-            <button className="secondary-btn" onClick={() => navigate(`/patients/${id}/conference/new`)}>
+            <button
+              className="secondary-btn"
+              onClick={() => navigate(`/patients/${id}/conference/new`)}
+            >
               Add Conference Record
             </button>
           </div>
@@ -56,20 +94,35 @@ export default function PatientDetailsPage() {
               <th>Type</th>
               <th>Date</th>
               <th>ESAS Total</th>
-              <th>Severity</th>
               <th>QLQ Total</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {assessments.map((a) => (
-              <tr key={a._id}>
-                <td>{a.assessmentType}</td>
-                <td>{new Date(a.assessmentDate).toISOString().slice(0, 10)}</td>
-                <td>{a.esas?.totalScore}</td>
-                <td>{a.esas?.severity}</td>
-                <td>{a.qlqC30?.totalScore}</td>
+            {assessments.length === 0 ? (
+              <tr>
+                <td colSpan="5">No assessments found.</td>
               </tr>
-            ))}
+            ) : (
+              assessments.map((a) => (
+                <tr key={a._id}>
+                  <td>{a.assessmentType}</td>
+                  <td>{new Date(a.assessmentDate).toISOString().slice(0, 10)}</td>
+                  <td>{computeEsasTotal(a.esas)}</td>
+                  <td>{computeQlqTotal(a.qlqC30)}</td>
+                  <td>
+                    <div className="table-actions">
+                      <button
+                        className="tiny-btn"
+                        onClick={() => navigate(`/assessments/${a._id}/edit`)}
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -87,15 +140,21 @@ export default function PatientDetailsPage() {
             </tr>
           </thead>
           <tbody>
-            {conferenceRecords.map((c) => (
-              <tr key={c._id}>
-                <td>{new Date(c.conferenceDate).toISOString().slice(0, 10)}</td>
-                <td>{c.imagingModality}</td>
-                <td>{c.bodyRegion}</td>
-                <td>{String(c.treatmentPlanModified)}</td>
-                <td>{String(c.goalsOfCareChanged)}</td>
+            {conferenceRecords.length === 0 ? (
+              <tr>
+                <td colSpan="5">No conference records found.</td>
               </tr>
-            ))}
+            ) : (
+              conferenceRecords.map((c) => (
+                <tr key={c._id}>
+                  <td>{new Date(c.conferenceDate).toISOString().slice(0, 10)}</td>
+                  <td>{c.imagingModality}</td>
+                  <td>{c.bodyRegion}</td>
+                  <td>{String(c.treatmentPlanModified)}</td>
+                  <td>{String(c.goalsOfCareChanged)}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

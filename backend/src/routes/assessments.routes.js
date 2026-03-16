@@ -20,8 +20,11 @@ const createAssessmentSchema = z.object({
   esas: z.object({}).passthrough().optional(),
 
   radiologyConference: z.object({}).passthrough().optional(),
+
+  postDircQlqC30: z.object({}).passthrough().optional(),
+  postDircEsas: z.object({}).passthrough().optional(),
+
   postConferenceOutcomes: z.object({}).passthrough().optional(),
-  postRadioConferenceAssessment: z.object({}).passthrough().optional(),
   summary: z.object({}).passthrough().optional(),
 
   notes: z.string().optional()
@@ -41,8 +44,11 @@ const updateAssessmentSchema = z.object({
   esas: z.object({}).passthrough().optional(),
 
   radiologyConference: z.object({}).passthrough().optional(),
+
+  postDircQlqC30: z.object({}).passthrough().optional(),
+  postDircEsas: z.object({}).passthrough().optional(),
+
   postConferenceOutcomes: z.object({}).passthrough().optional(),
-  postRadioConferenceAssessment: z.object({}).passthrough().optional(),
   summary: z.object({}).passthrough().optional(),
 
   notes: z.string().optional()

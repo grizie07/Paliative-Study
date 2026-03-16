@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import PageHeader from "../components/common/PageHeader";
 import api from "../services/api";
@@ -127,6 +127,28 @@ const qlq7 = {
   hi: ["बहुत खराब", "खराब", "ठीक-ठाक", "अच्छा", "बहुत अच्छा", "उत्कृष्ट", "उत्कृष्ट"]
 };
 
+const defaultEsas = {
+  pain: 0,
+  tiredness: 0,
+  drowsiness: 0,
+  nausea: 0,
+  appetite: 0,
+  shortnessOfBreath: 0,
+  depression: 0,
+  anxiety: 0,
+  wellbeing: 0,
+  otherProblem: 0,
+  patientName: "",
+  date: "",
+  time: "",
+  completedBy: {
+    patient: false,
+    familyCaregiver: false,
+    healthcareProfessionalCaregiver: false
+  },
+  bodyDiagramNotes: ""
+};
+
 const defaultState = {
   language: "en",
 
@@ -185,27 +207,7 @@ const defaultState = {
     Array.from({ length: 30 }, (_, i) => [`q${i + 1}`, 1])
   ),
 
-  esas: {
-    pain: 0,
-    tiredness: 0,
-    drowsiness: 0,
-    nausea: 0,
-    appetite: 0,
-    shortnessOfBreath: 0,
-    depression: 0,
-    anxiety: 0,
-    wellbeing: 0,
-    otherProblem: 0,
-    patientName: "",
-    date: "",
-    time: "",
-    completedBy: {
-      patient: false,
-      familyCaregiver: false,
-      healthcareProfessionalCaregiver: false
-    },
-    bodyDiagramNotes: ""
-  },
+  esas: { ...defaultEsas },
 
   radiologyConference: {
     numberOfImagingSubmitted: "",
@@ -226,6 +228,12 @@ const defaultState = {
     furtherSuggestionsForManagement: ""
   },
 
+  postDircQlqC30: Object.fromEntries(
+    Array.from({ length: 30 }, (_, i) => [`q${i + 1}`, 1])
+  ),
+
+  postDircEsas: { ...defaultEsas },
+
   postConferenceOutcomes: {
     changesInPrimaryTreatment: "",
     changesInIntentOfTreatment: "",
@@ -238,11 +246,6 @@ const defaultState = {
     furtherImagingAdvisedWhat: "",
     goalsOfCareRevisedYesNo: "",
     advanceCarePlanningDiscussions: ""
-  },
-
-  postRadioConferenceAssessment: {
-    qlqAttached: "",
-    esasAttached: ""
   },
 
   summary: {
@@ -279,13 +282,76 @@ function SectionCard({ title, children }) {
 }
 
 export default function AssessmentCreatePage() {
-  const { id } = useParams();
+  const { id, assessmentId } = useParams();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [form, setForm] = useState(defaultState);
+
+  useEffect(() => {
+    const loadAssessment = async () => {
+      if (!assessmentId) return;
+
+      setInitialLoading(true);
+      setSubmitError("");
+
+      try {
+        const res = await api.get(`/assessments/${assessmentId}`);
+        const a = res.data;
+
+        setForm((prev) => ({
+          ...prev,
+          language: "en",
+          demographic: { ...prev.demographic, ...(a.demographic || {}) },
+          history: { ...prev.history, ...(a.history || {}) },
+          investigations: { ...prev.investigations, ...(a.investigations || {}) },
+          preConference: { ...prev.preConference, ...(a.preConference || {}) },
+          qlqC30: { ...prev.qlqC30, ...(a.qlqC30 || {}) },
+          esas: {
+            ...prev.esas,
+            ...(a.esas || {}),
+            completedBy: {
+              ...prev.esas.completedBy,
+              ...(a.esas?.completedBy || {})
+            }
+          },
+          radiologyConference: {
+            ...prev.radiologyConference,
+            ...(a.radiologyConference || {}),
+            rows:
+              Array.isArray(a.radiologyConference?.rows) && a.radiologyConference.rows.length > 0
+                ? a.radiologyConference.rows
+                : prev.radiologyConference.rows
+          },
+          postDircQlqC30: { ...prev.postDircQlqC30, ...(a.postDircQlqC30 || {}) },
+          postDircEsas: {
+            ...prev.postDircEsas,
+            ...(a.postDircEsas || {}),
+            completedBy: {
+              ...prev.postDircEsas.completedBy,
+              ...(a.postDircEsas?.completedBy || {})
+            }
+          },
+          postConferenceOutcomes: {
+            ...prev.postConferenceOutcomes,
+            ...(a.postConferenceOutcomes || {})
+          },
+          summary: { ...prev.summary, ...(a.summary || {}) }
+        }));
+      } catch (err) {
+        setSubmitError(
+          err?.response?.data?.message || "Failed to load assessment."
+        );
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadAssessment();
+  }, [assessmentId]);
 
   const esasTotal = useMemo(() => {
     const core = [
@@ -316,6 +382,36 @@ export default function AssessmentCreatePage() {
     ];
     return core.filter((v) => Number(v) > 0).length;
   }, [form.esas]);
+
+  const postDircEsasTotal = useMemo(() => {
+    const core = [
+      form.postDircEsas.pain,
+      form.postDircEsas.tiredness,
+      form.postDircEsas.drowsiness,
+      form.postDircEsas.nausea,
+      form.postDircEsas.appetite,
+      form.postDircEsas.shortnessOfBreath,
+      form.postDircEsas.depression,
+      form.postDircEsas.anxiety,
+      form.postDircEsas.wellbeing
+    ];
+    return core.reduce((a, b) => a + Number(b || 0), 0);
+  }, [form.postDircEsas]);
+
+  const postDircActiveSymptoms = useMemo(() => {
+    const core = [
+      form.postDircEsas.pain,
+      form.postDircEsas.tiredness,
+      form.postDircEsas.drowsiness,
+      form.postDircEsas.nausea,
+      form.postDircEsas.appetite,
+      form.postDircEsas.shortnessOfBreath,
+      form.postDircEsas.depression,
+      form.postDircEsas.anxiety,
+      form.postDircEsas.wellbeing
+    ];
+    return core.filter((v) => Number(v) > 0).length;
+  }, [form.postDircEsas]);
 
   const updateNested = (group, key, value) => {
     setForm((prev) => ({
@@ -348,7 +444,7 @@ export default function AssessmentCreatePage() {
     try {
       let patientId = id;
 
-      if (!patientId) {
+      if (!patientId && !assessmentId) {
         const patientPayload = {
           uhid: form.demographic.uhid,
           patientName: form.demographic.name,
@@ -372,25 +468,27 @@ export default function AssessmentCreatePage() {
         patientId,
         assessmentType: "baseline",
         assessmentDate: form.demographic.date || new Date().toISOString(),
-
         demographic: form.demographic,
         history: form.history,
         investigations: form.investigations,
         preConference: form.preConference,
-
         qlqC30: form.qlqC30,
-
         esas: form.esas,
-
         radiologyConference: form.radiologyConference,
+        postDircQlqC30: form.postDircQlqC30,
+        postDircEsas: form.postDircEsas,
         postConferenceOutcomes: form.postConferenceOutcomes,
-        postRadioConferenceAssessment: form.postRadioConferenceAssessment,
         summary: form.summary,
         notes: ""
       };
 
-      await api.post("/assessments", assessmentPayload);
-      navigate(`/patients/${patientId}`);
+      if (assessmentId) {
+        await api.patch(`/assessments/${assessmentId}`, assessmentPayload);
+        navigate(`/patients/${patientId || id}`);
+      } else {
+        await api.post("/assessments", assessmentPayload);
+        navigate(`/patients/${patientId}`);
+      }
     } catch (err) {
       setSubmitError(
         err?.response?.data?.message || "Failed to save assessment and patient."
@@ -407,13 +505,21 @@ export default function AssessmentCreatePage() {
       ? qlqHiLatn
       : qlqEn;
 
+  if (initialLoading) {
+    return <div className="page">Loading assessment...</div>;
+  }
+
   return (
     <div className="page">
       <PageHeader
-        title="Assessment / Case Record Wizard"
-        subtitle={`Patient route id: ${id || "new patient"}`}
+        title={assessmentId ? "Edit Assessment / Case Record" : "Assessment / Case Record Wizard"}
+        subtitle={
+          assessmentId
+            ? `Editing assessment: ${assessmentId}`
+            : `Patient route id: ${id || "new patient"}`
+        }
         actions={
-          step === 4 ? (
+          step === 4 || step === 6 ? (
             <select
               className="lang-select"
               value={form.language}
@@ -436,7 +542,8 @@ export default function AssessmentCreatePage() {
           <WizardStep number={3} title="Investigations & Treatment" active={step === 3} />
           <WizardStep number={4} title="QLQ-C30 + ESAS + Body Map" active={step === 4} />
           <WizardStep number={5} title="Radiology Conference Discussion" active={step === 5} />
-          <WizardStep number={6} title="Post Conference Outcomes + Summary" active={step === 6} />
+          <WizardStep number={6} title="Post-DIRC" active={step === 6} />
+          <WizardStep number={7} title="Post Conference Outcomes + Summary" active={step === 7} />
         </div>
 
         {step === 1 && (
@@ -444,13 +551,12 @@ export default function AssessmentCreatePage() {
             <div className="form-grid">
               <div className="form-field"><label>A. Name</label><input value={form.demographic.name} onChange={(e) => updateNested("demographic", "name", e.target.value)} /></div>
               <div className="form-field"><label>B. Age</label><input value={form.demographic.age} onChange={(e) => updateNested("demographic", "age", e.target.value)} /></div>
-              <div className="form-field"><label>C. Gender</label><select value={form.demographic.gender}onChange={(e) => updateNested("demographic", "gender", e.target.value)}>
-    <option value="">Select gender</option>
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-    <option value="Other">Other</option>
-  </select>
-</div>
+              <div className="form-field"><label>C. Gender</label><select value={form.demographic.gender} onChange={(e) => updateNested("demographic", "gender", e.target.value)}>
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select></div>
               <div className="form-field span-2"><label>D. Address</label><input value={form.demographic.address} onChange={(e) => updateNested("demographic", "address", e.target.value)} /></div>
               <div className="form-field"><label>E. Religion</label><input value={form.demographic.religion} onChange={(e) => updateNested("demographic", "religion", e.target.value)} /></div>
               <div className="form-field"><label>F. Date</label><input type="date" value={form.demographic.date} onChange={(e) => updateNested("demographic", "date", e.target.value)} /></div>
@@ -516,7 +622,7 @@ export default function AssessmentCreatePage() {
 
         {step === 4 && (
           <>
-            <SectionCard title="QLQ-C30">
+            <SectionCard title="PRE-DIRC QLQ-C30">
               <div className="question-grid">
                 {qlqQuestions.map((text, i) => {
                   const qNo = i + 1;
@@ -549,7 +655,7 @@ export default function AssessmentCreatePage() {
               </div>
             </SectionCard>
 
-            <SectionCard title="ESAS-r">
+            <SectionCard title="PRE-DIRC ESAS-r">
               <div className="scale-note">
                 <span>{textByLanguage("0 = No symptom", "0 = Bilkul nahin", "0 = बिल्कुल नहीं", form.language)}</span>
                 <span>{textByLanguage("10 = Worst possible", "10 = Sabse zyada", "10 = सबसे ज़्यादा", form.language)}</span>
@@ -595,7 +701,7 @@ export default function AssessmentCreatePage() {
               </div>
             </SectionCard>
 
-            <SectionCard title="Body Diagram - Please mark on these pictures where it is that you hurt">
+            <SectionCard title="PRE-DIRC Body Diagram">
               <div className="body-map-grid">
                 <div className="body-map-card">
                   <h4>Body Map</h4>
@@ -662,7 +768,108 @@ export default function AssessmentCreatePage() {
 
         {step === 6 && (
           <>
-            <SectionCard title="SECTION 6 - POST CONFERENCE OUTCOMES">
+            <SectionCard title="POST-DIRC QLQ-C30">
+              <div className="question-grid">
+                {qlqQuestions.map((text, i) => {
+                  const qNo = i + 1;
+                  const options = qNo >= 29 ? qlq7[form.language] : qlq4[form.language];
+
+                  return (
+                    <div key={qNo} className="question-card">
+                      <label>{qNo}. {text}</label>
+                      <select
+                        value={form.postDircQlqC30[`q${qNo}`]}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            postDircQlqC30: {
+                              ...prev.postDircQlqC30,
+                              [`q${qNo}`]: Number(e.target.value)
+                            }
+                          }))
+                        }
+                      >
+                        {options.map((opt, idx) => (
+                          <option key={idx + 1} value={idx + 1}>
+                            {idx + 1} - {opt}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+            </SectionCard>
+
+            <SectionCard title="POST-DIRC ESAS-r">
+              <div className="scale-note">
+                <span>{textByLanguage("0 = No symptom", "0 = Bilkul nahin", "0 = बिल्कुल नहीं", form.language)}</span>
+                <span>{textByLanguage("10 = Worst possible", "10 = Sabse zyada", "10 = सबसे ज़्यादा", form.language)}</span>
+              </div>
+
+              <div className="question-grid">
+                {esasFields.map((f) => (
+                  <div key={f.key} className="question-card">
+                    <label>{textByLanguage(f.en, f.hiLatn, f.hi, form.language)}</label>
+                    <select
+                      value={form.postDircEsas[f.key]}
+                      onChange={(e) => updateNested("postDircEsas", f.key, Number(e.target.value))}
+                    >
+                      {Array.from({ length: 11 }, (_, i) => i).map((n) => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+
+              <div className="esas-summary-grid">
+                <div className="summary-box">
+                  <div className="summary-title">Post-DIRC Total ESAS Score</div>
+                  <div className="summary-value">{postDircEsasTotal}</div>
+                </div>
+                <div className="summary-box">
+                  <div className="summary-title">Post-DIRC Active Symptoms</div>
+                  <div className="summary-value">{postDircActiveSymptoms}</div>
+                </div>
+              </div>
+
+              <div className="form-grid" style={{ marginTop: 18 }}>
+                <div className="form-field"><label>Patient Name</label><input value={form.postDircEsas.patientName} onChange={(e) => updateNested("postDircEsas", "patientName", e.target.value)} /></div>
+                <div className="form-field"><label>Date</label><input type="date" value={form.postDircEsas.date} onChange={(e) => updateNested("postDircEsas", "date", e.target.value)} /></div>
+                <div className="form-field"><label>Time</label><input value={form.postDircEsas.time} onChange={(e) => updateNested("postDircEsas", "time", e.target.value)} /></div>
+              </div>
+
+              <div className="checkbox-grid">
+                <label className="checkbox-line"><input type="checkbox" checked={form.postDircEsas.completedBy.patient} onChange={(e) => setForm((prev) => ({ ...prev, postDircEsas: { ...prev.postDircEsas, completedBy: { ...prev.postDircEsas.completedBy, patient: e.target.checked } } }))} />Patient</label>
+                <label className="checkbox-line"><input type="checkbox" checked={form.postDircEsas.completedBy.familyCaregiver} onChange={(e) => setForm((prev) => ({ ...prev, postDircEsas: { ...prev.postDircEsas, completedBy: { ...prev.postDircEsas.completedBy, familyCaregiver: e.target.checked } } }))} />Family Caregiver</label>
+                <label className="checkbox-line"><input type="checkbox" checked={form.postDircEsas.completedBy.healthcareProfessionalCaregiver} onChange={(e) => setForm((prev) => ({ ...prev, postDircEsas: { ...prev.postDircEsas, completedBy: { ...prev.postDircEsas.completedBy, healthcareProfessionalCaregiver: e.target.checked } } }))} />Health Care Professional Caregiver</label>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="POST-DIRC Body Diagram">
+              <div className="body-map-grid">
+                <div className="body-map-card">
+                  <h4>Body Map</h4>
+                  <img src="/body-map.png" alt="Body map" className="body-map-image" />
+                </div>
+                <div className="body-map-card">
+                  <h4>Body Diagram Notes</h4>
+                  <textarea
+                    rows="10"
+                    value={form.postDircEsas.bodyDiagramNotes}
+                    onChange={(e) => updateNested("postDircEsas", "bodyDiagramNotes", e.target.value)}
+                    placeholder="Describe marked pain locations exactly as shown on the body diagram."
+                  />
+                </div>
+              </div>
+            </SectionCard>
+          </>
+        )}
+
+        {step === 7 && (
+          <>
+            <SectionCard title="SECTION 7 - POST CONFERENCE OUTCOMES">
               <div className="form-grid">
                 <div className="form-field span-2"><label>A. Changes in primary treatment</label><textarea rows="3" value={form.postConferenceOutcomes.changesInPrimaryTreatment} onChange={(e) => updateNested("postConferenceOutcomes", "changesInPrimaryTreatment", e.target.value)} /></div>
                 <div className="form-field span-2"><label>B. Changes in intent of treatment</label><textarea rows="3" value={form.postConferenceOutcomes.changesInIntentOfTreatment} onChange={(e) => updateNested("postConferenceOutcomes", "changesInIntentOfTreatment", e.target.value)} /></div>
@@ -678,13 +885,6 @@ export default function AssessmentCreatePage() {
 
                 <div className="form-field"><label>Goals of Care Revised</label><input value={form.postConferenceOutcomes.goalsOfCareRevisedYesNo} onChange={(e) => updateNested("postConferenceOutcomes", "goalsOfCareRevisedYesNo", e.target.value)} placeholder="YES / NO" /></div>
                 <div className="form-field span-2"><label>Advance Care Planning Discussions</label><textarea rows="3" value={form.postConferenceOutcomes.advanceCarePlanningDiscussions} onChange={(e) => updateNested("postConferenceOutcomes", "advanceCarePlanningDiscussions", e.target.value)} /></div>
-              </div>
-            </SectionCard>
-
-            <SectionCard title="POST RADIOCONFERENCE ASSESSMENT">
-              <div className="form-grid">
-                <div className="form-field"><label>EORTC QLQ C30</label><input value={form.postRadioConferenceAssessment.qlqAttached} onChange={(e) => updateNested("postRadioConferenceAssessment", "qlqAttached", e.target.value)} placeholder="Attached" /></div>
-                <div className="form-field"><label>ESAS scores (Post-DIRC)</label><input value={form.postRadioConferenceAssessment.esasAttached} onChange={(e) => updateNested("postRadioConferenceAssessment", "esasAttached", e.target.value)} placeholder="Attached" /></div>
               </div>
             </SectionCard>
 
@@ -734,17 +934,31 @@ export default function AssessmentCreatePage() {
         {submitError && <div className="error-box">{submitError}</div>}
 
         <div className="footer-actions">
-          <button type="button" className="secondary-btn" disabled={step === 1} onClick={() => setStep((s) => s - 1)}>
+          <button
+            type="button"
+            className="secondary-btn"
+            disabled={step === 1}
+            onClick={() => setStep((s) => s - 1)}
+          >
             Previous
           </button>
 
-          {step < 6 ? (
-            <button type="button" className="primary-btn" onClick={() => setStep((s) => s + 1)}>
+          {step < 7 ? (
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={() => setStep((s) => s + 1)}
+            >
               Next
             </button>
           ) : (
-            <button type="button" className="primary-btn" onClick={handleSubmit} disabled={loading}>
-              {loading ? "Saving..." : "Save Case Record"}
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? "Saving..." : assessmentId ? "Update Case Record" : "Save Case Record"}
             </button>
           )}
         </div>
