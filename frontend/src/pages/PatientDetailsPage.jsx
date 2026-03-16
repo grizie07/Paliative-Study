@@ -27,6 +27,7 @@ function computeQlqTotal(qlq = {}) {
 export default function PatientDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
 
@@ -45,7 +46,11 @@ export default function PatientDetailsPage() {
   }, [id]);
 
   if (error) {
-    return <div className="page"><div className="error-box">{error}</div></div>;
+    return (
+      <div className="page">
+        <div className="error-box">{error}</div>
+      </div>
+    );
   }
 
   if (!data) return <div className="page">Loading...</div>;
@@ -81,8 +86,13 @@ export default function PatientDetailsPage() {
           <div><strong>Name:</strong> {patient.patientName}</div>
           <div><strong>Age:</strong> {patient.age}</div>
           <div><strong>Gender:</strong> {patient.gender}</div>
+          <div><strong>Address:</strong> {patient.address}</div>
+          <div><strong>Religion:</strong> {patient.religion}</div>
+          <div><strong>Phone Number:</strong> {patient.phoneNumber}</div>
           <div><strong>Diagnosis:</strong> {patient.primaryDiagnosis}</div>
+          <div><strong>Diagnosis Date:</strong> {patient.diagnosisDate}</div>
           <div><strong>Stage:</strong> {patient.cancerStage}</div>
+          <div><strong>Consent Given:</strong> {String(patient.consentGiven)}</div>
         </div>
       </div>
 
@@ -93,15 +103,17 @@ export default function PatientDetailsPage() {
             <tr>
               <th>Type</th>
               <th>Date</th>
-              <th>ESAS Total</th>
-              <th>QLQ Total</th>
+              <th>Pre ESAS Total</th>
+              <th>Pre QLQ Total</th>
+              <th>Post ESAS Total</th>
+              <th>Post QLQ Total</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {assessments.length === 0 ? (
               <tr>
-                <td colSpan="5">No assessments found.</td>
+                <td colSpan="7">No assessments found.</td>
               </tr>
             ) : (
               assessments.map((a) => (
@@ -110,6 +122,8 @@ export default function PatientDetailsPage() {
                   <td>{new Date(a.assessmentDate).toISOString().slice(0, 10)}</td>
                   <td>{computeEsasTotal(a.esas)}</td>
                   <td>{computeQlqTotal(a.qlqC30)}</td>
+                  <td>{computeEsasTotal(a.postDircEsas)}</td>
+                  <td>{computeQlqTotal(a.postDircQlqC30)}</td>
                   <td>
                     <div className="table-actions">
                       <button
@@ -117,6 +131,12 @@ export default function PatientDetailsPage() {
                         onClick={() => navigate(`/assessments/${a._id}/edit`)}
                       >
                         Edit
+                      </button>
+                      <button
+                        className="tiny-btn"
+                        onClick={() => navigate(`/assessments/${a._id}/post-dirc`)}
+                      >
+                        Post-DIRC
                       </button>
                     </div>
                   </td>
@@ -133,16 +153,17 @@ export default function PatientDetailsPage() {
           <thead>
             <tr>
               <th>Date</th>
-              <th>Imaging</th>
+              <th>Primary Imaging</th>
               <th>Body Region</th>
               <th>Treatment Modified</th>
               <th>Goals Changed</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {conferenceRecords.length === 0 ? (
               <tr>
-                <td colSpan="5">No conference records found.</td>
+                <td colSpan="6">No conference records found.</td>
               </tr>
             ) : (
               conferenceRecords.map((c) => (
@@ -152,6 +173,14 @@ export default function PatientDetailsPage() {
                   <td>{c.bodyRegion}</td>
                   <td>{String(c.treatmentPlanModified)}</td>
                   <td>{String(c.goalsOfCareChanged)}</td>
+                  <td>
+                    <button
+                      className="tiny-btn"
+                      onClick={() => navigate(`/conference-records/${c._id}/edit`)}
+                    >
+                      Edit
+                    </button>
+                  </td>
                 </tr>
               ))
             )}

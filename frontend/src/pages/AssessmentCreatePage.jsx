@@ -149,6 +149,14 @@ const defaultEsas = {
   bodyDiagramNotes: ""
 };
 
+const emptyConferenceRow = {
+  modality: "",
+  partRegion: "",
+  yesNo: "",
+  date: "",
+  findings: ""
+};
+
 const defaultState = {
   language: "en",
 
@@ -211,14 +219,7 @@ const defaultState = {
 
   radiologyConference: {
     numberOfImagingSubmitted: "",
-    rows: [
-      { modality: "X-RAY", partRegion: "", yesNo: "", date: "", findings: "" },
-      { modality: "USG", partRegion: "", yesNo: "", date: "", findings: "" },
-      { modality: "CT SCAN (NCCT/CECT)", partRegion: "", yesNo: "", date: "", findings: "" },
-      { modality: "MRI", partRegion: "", yesNo: "", date: "", findings: "" },
-      { modality: "PET CT", partRegion: "", yesNo: "", date: "", findings: "" },
-      { modality: "Other", partRegion: "", yesNo: "", date: "", findings: "" }
-    ],
+    rows: [{ ...emptyConferenceRow }],
     summaryOfFindings: "",
     implicationsForPatientCare: "",
     doubtsQueriesPutForth: "",
@@ -425,13 +426,36 @@ export default function AssessmentCreatePage() {
 
   const updateConferenceRow = (index, key, value) => {
     setForm((prev) => {
-      const rows = [...prev.radiologyConference.rows];
+      const rows = [...(prev.radiologyConference.rows || [])];
       rows[index] = { ...rows[index], [key]: value };
       return {
         ...prev,
         radiologyConference: {
           ...prev.radiologyConference,
           rows
+        }
+      };
+    });
+  };
+
+  const addConferenceRow = () => {
+    setForm((prev) => ({
+      ...prev,
+      radiologyConference: {
+        ...prev.radiologyConference,
+        rows: [...(prev.radiologyConference.rows || []), { ...emptyConferenceRow }]
+      }
+    }));
+  };
+
+  const removeConferenceRow = (index) => {
+    setForm((prev) => {
+      const nextRows = (prev.radiologyConference.rows || []).filter((_, i) => i !== index);
+      return {
+        ...prev,
+        radiologyConference: {
+          ...prev.radiologyConference,
+          rows: nextRows.length ? nextRows : [{ ...emptyConferenceRow }]
         }
       };
     });
@@ -468,13 +492,21 @@ export default function AssessmentCreatePage() {
         patientId,
         assessmentType: "baseline",
         assessmentDate: form.demographic.date || new Date().toISOString(),
+
         demographic: form.demographic,
         history: form.history,
         investigations: form.investigations,
         preConference: form.preConference,
         qlqC30: form.qlqC30,
         esas: form.esas,
-        radiologyConference: form.radiologyConference,
+
+        radiologyConference: {
+          ...form.radiologyConference,
+          rows: (form.radiologyConference.rows || []).filter(
+            (row) => row.modality || row.partRegion || row.yesNo || row.date || row.findings
+          )
+        },
+
         postDircQlqC30: form.postDircQlqC30,
         postDircEsas: form.postDircEsas,
         postConferenceOutcomes: form.postConferenceOutcomes,
@@ -724,7 +756,23 @@ export default function AssessmentCreatePage() {
         {step === 5 && (
           <SectionCard title="SECTION 5 - RADIOLOGY CONFERENCE DISCUSSION">
             <div className="form-grid">
-              <div className="form-field"><label>a. Number of imaging submitted for discussion</label><input value={form.radiologyConference.numberOfImagingSubmitted} onChange={(e) => updateNested("radiologyConference", "numberOfImagingSubmitted", e.target.value)} /></div>
+              <div className="form-field">
+                <label>a. Number of imaging submitted for discussion</label>
+                <input
+                  value={form.radiologyConference.numberOfImagingSubmitted}
+                  onChange={(e) => updateNested("radiologyConference", "numberOfImagingSubmitted", e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div
+              className="panel-head"
+              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}
+            >
+              <h3>Radiology Imaging Rows</h3>
+              <button type="button" className="secondary-btn" onClick={addConferenceRow}>
+                Add Imaging Row
+              </button>
             </div>
 
             <div className="table-scroll">
@@ -737,17 +785,62 @@ export default function AssessmentCreatePage() {
                     <th>YES/NO</th>
                     <th>DATE</th>
                     <th>REPORTED FINDINGS SUMMARY</th>
+                    <th>ACTION</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {form.radiologyConference.rows.map((row, idx) => (
+                  {(form.radiologyConference.rows || []).map((row, idx) => (
                     <tr key={idx}>
                       <td>{idx + 1}</td>
-                      <td>{row.modality}</td>
-                      <td><input value={row.partRegion} onChange={(e) => updateConferenceRow(idx, "partRegion", e.target.value)} /></td>
-                      <td><input value={row.yesNo} onChange={(e) => updateConferenceRow(idx, "yesNo", e.target.value)} /></td>
-                      <td><input type="date" value={row.date} onChange={(e) => updateConferenceRow(idx, "date", e.target.value)} /></td>
-                      <td><textarea rows="2" value={row.findings} onChange={(e) => updateConferenceRow(idx, "findings", e.target.value)} /></td>
+                      <td>
+                        <select
+                          value={row.modality}
+                          onChange={(e) => updateConferenceRow(idx, "modality", e.target.value)}
+                        >
+                          <option value="">Select</option>
+                          <option value="X-RAY">X-RAY</option>
+                          <option value="USG">USG</option>
+                          <option value="CT">CT</option>
+                          <option value="MRI">MRI</option>
+                          <option value="PET-CT">PET-CT</option>
+                          <option value="OTHER">OTHER</option>
+                        </select>
+                      </td>
+                      <td>
+                        <input
+                          value={row.partRegion}
+                          onChange={(e) => updateConferenceRow(idx, "partRegion", e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          value={row.yesNo}
+                          onChange={(e) => updateConferenceRow(idx, "yesNo", e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="date"
+                          value={row.date}
+                          onChange={(e) => updateConferenceRow(idx, "date", e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <textarea
+                          rows="2"
+                          value={row.findings}
+                          onChange={(e) => updateConferenceRow(idx, "findings", e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="tiny-btn"
+                          onClick={() => removeConferenceRow(idx)}
+                        >
+                          Remove
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

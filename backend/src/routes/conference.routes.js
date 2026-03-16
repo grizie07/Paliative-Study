@@ -9,16 +9,23 @@ import { requireRole } from "../middleware/role.js";
 function conferenceRoutes() {
   const router = express.Router();
 
+  const imagingRowSchema = z.object({
+    modality: z.string().optional(),
+    partRegion: z.string().optional(),
+    yesNo: z.string().optional(),
+    date: z.string().optional(),
+    findings: z.string().optional()
+  });
+
   const createConferenceSchema = z.object({
     patientId: z.string().min(1),
     baselineAssessmentId: z.string().min(1),
     followupAssessmentId: z.string().optional(),
     conferenceDate: z.string(),
 
-    imagingModality: z
-      .enum(["X-RAY", "USG", "CT", "MRI", "PET-CT", "OTHER", ""])
-      .optional(),
+    imagingRows: z.array(imagingRowSchema).optional(),
 
+    imagingModality: z.enum(["X-RAY", "USG", "CT", "MRI", "PET-CT", "OTHER", ""]).optional(),
     bodyRegion: z.string().optional(),
     imagingFindings: z.string().optional(),
     clinicalQuestionOrConcern: z.string().optional(),
@@ -36,9 +43,10 @@ function conferenceRoutes() {
   const updateConferenceSchema = z.object({
     followupAssessmentId: z.string().optional(),
     conferenceDate: z.string().optional(),
-    imagingModality: z
-      .enum(["X-RAY", "USG", "CT", "MRI", "PET-CT", "OTHER", ""])
-      .optional(),
+
+    imagingRows: z.array(imagingRowSchema).optional(),
+
+    imagingModality: z.enum(["X-RAY", "USG", "CT", "MRI", "PET-CT", "OTHER", ""]).optional(),
     bodyRegion: z.string().optional(),
     imagingFindings: z.string().optional(),
     clinicalQuestionOrConcern: z.string().optional(),
@@ -62,33 +70,37 @@ function conferenceRoutes() {
           return res.status(404).json({ message: "Patient not found" });
         }
 
-        const baselineAssessment = await Assessment.findById(
-          req.body.baselineAssessmentId
-        ).lean();
-
+        const baselineAssessment = await Assessment.findById(req.body.baselineAssessmentId).lean();
         if (!baselineAssessment) {
           return res.status(404).json({ message: "Baseline assessment not found" });
         }
 
-        let followupAssessment = null;
         if (req.body.followupAssessmentId) {
-          followupAssessment = await Assessment.findById(
-            req.body.followupAssessmentId
-          ).lean();
-
+          const followupAssessment = await Assessment.findById(req.body.followupAssessmentId).lean();
           if (!followupAssessment) {
             return res.status(404).json({ message: "Follow-up assessment not found" });
           }
         }
+
+        const cleanedRows = Array.isArray(req.body.imagingRows)
+          ? req.body.imagingRows.filter(
+              (row) => row.modality || row.partRegion || row.yesNo || row.date || row.findings
+            )
+          : [];
+
+        const firstRow = cleanedRows[0] || {};
 
         const conferenceRecord = await ConferenceRecord.create({
           patientId: req.body.patientId,
           baselineAssessmentId: req.body.baselineAssessmentId,
           followupAssessmentId: req.body.followupAssessmentId || null,
           conferenceDate: new Date(req.body.conferenceDate),
-          imagingModality: req.body.imagingModality || "",
-          bodyRegion: req.body.bodyRegion || "",
-          imagingFindings: req.body.imagingFindings || "",
+
+          imagingRows: cleanedRows,
+          imagingModality: req.body.imagingModality || firstRow.modality || "",
+          bodyRegion: req.body.bodyRegion || firstRow.partRegion || "",
+          imagingFindings: req.body.imagingFindings || firstRow.findings || "",
+
           clinicalQuestionOrConcern: req.body.clinicalQuestionOrConcern || "",
           radiologyClarification: req.body.radiologyClarification || "",
           recommendations: req.body.recommendations || "",
@@ -174,6 +186,17 @@ function conferenceRoutes() {
 
         if (updateData.conferenceDate) {
           updateData.conferenceDate = new Date(updateData.conferenceDate);
+        }
+
+        if (Array.isArray(updateData.imagingRows)) {
+          updateData.imagingRows = updateData.imagingRows.filter(
+            (row) => row.modality || row.partRegion || row.yesNo || row.date || row.findings
+          );
+
+          const firstRow = updateData.imagingRows[0] || {};
+          updateData.imagingModality = updateData.imagingModality ?? firstRow.modality ?? "";
+          updateData.bodyRegion = updateData.bodyRegion ?? firstRow.partRegion ?? "";
+          updateData.imagingFindings = updateData.imagingFindings ?? firstRow.findings ?? "";
         }
 
         const updated = await ConferenceRecord.findByIdAndUpdate(

@@ -6,6 +6,44 @@ import Assessment from "../models/Assessment.js";
 function exportRoutes(env) {
   const router = express.Router();
 
+  function qlqTotal(qlq = {}) {
+    return Array.from({ length: 30 }, (_, i) => Number(qlq?.[`q${i + 1}`] || 0)).reduce(
+      (sum, value) => sum + value,
+      0
+    );
+  }
+
+  function esasTotal(esas = {}) {
+    return (
+      Number(esas?.pain || 0) +
+      Number(esas?.tiredness || 0) +
+      Number(esas?.drowsiness || 0) +
+      Number(esas?.nausea || 0) +
+      Number(esas?.appetite || 0) +
+      Number(esas?.shortnessOfBreath || 0) +
+      Number(esas?.depression || 0) +
+      Number(esas?.anxiety || 0) +
+      Number(esas?.wellbeing || 0) +
+      Number(esas?.otherProblem || 0)
+    );
+  }
+
+  function activeSymptoms(esas = {}) {
+    const values = [
+      esas?.pain,
+      esas?.tiredness,
+      esas?.drowsiness,
+      esas?.nausea,
+      esas?.appetite,
+      esas?.shortnessOfBreath,
+      esas?.depression,
+      esas?.anxiety,
+      esas?.wellbeing,
+      esas?.otherProblem
+    ];
+    return values.filter((v) => Number(v || 0) > 0).length;
+  }
+
   router.get("/dataset", async (req, res) => {
     try {
       const patients = await Patient.find().lean();
@@ -77,37 +115,11 @@ function exportRoutes(env) {
 
         { header: "Pre Conference Goals Of Care", key: "preConferenceGoalsOfCare", width: 28 },
 
-        { header: "QLQ Q1", key: "q1", width: 10 },
-        { header: "QLQ Q2", key: "q2", width: 10 },
-        { header: "QLQ Q3", key: "q3", width: 10 },
-        { header: "QLQ Q4", key: "q4", width: 10 },
-        { header: "QLQ Q5", key: "q5", width: 10 },
-        { header: "QLQ Q6", key: "q6", width: 10 },
-        { header: "QLQ Q7", key: "q7", width: 10 },
-        { header: "QLQ Q8", key: "q8", width: 10 },
-        { header: "QLQ Q9", key: "q9", width: 10 },
-        { header: "QLQ Q10", key: "q10", width: 10 },
-        { header: "QLQ Q11", key: "q11", width: 10 },
-        { header: "QLQ Q12", key: "q12", width: 10 },
-        { header: "QLQ Q13", key: "q13", width: 10 },
-        { header: "QLQ Q14", key: "q14", width: 10 },
-        { header: "QLQ Q15", key: "q15", width: 10 },
-        { header: "QLQ Q16", key: "q16", width: 10 },
-        { header: "QLQ Q17", key: "q17", width: 10 },
-        { header: "QLQ Q18", key: "q18", width: 10 },
-        { header: "QLQ Q19", key: "q19", width: 10 },
-        { header: "QLQ Q20", key: "q20", width: 10 },
-        { header: "QLQ Q21", key: "q21", width: 10 },
-        { header: "QLQ Q22", key: "q22", width: 10 },
-        { header: "QLQ Q23", key: "q23", width: 10 },
-        { header: "QLQ Q24", key: "q24", width: 10 },
-        { header: "QLQ Q25", key: "q25", width: 10 },
-        { header: "QLQ Q26", key: "q26", width: 10 },
-        { header: "QLQ Q27", key: "q27", width: 10 },
-        { header: "QLQ Q28", key: "q28", width: 10 },
-        { header: "QLQ Q29", key: "q29", width: 10 },
-        { header: "QLQ Q30", key: "q30", width: 10 },
-
+        ...Array.from({ length: 30 }, (_, i) => ({
+          header: `QLQ Q${i + 1}`,
+          key: `q${i + 1}`,
+          width: 10
+        })),
         { header: "QLQ Total Score", key: "qlqTotalScore", width: 16 },
 
         { header: "ESAS Pain", key: "esasPain", width: 12 },
@@ -128,6 +140,7 @@ function exportRoutes(env) {
         { header: "ESAS Completed By Healthcare Professional Caregiver", key: "esasCompletedByHealthcareProfessionalCaregiver", width: 36 },
         { header: "Body Diagram Notes", key: "bodyDiagramNotes", width: 36 },
         { header: "ESAS Total Score", key: "esasTotalScore", width: 16 },
+        { header: "ESAS Active Symptoms", key: "esasActiveSymptoms", width: 18 },
 
         { header: "Number Of Imaging Submitted", key: "numberOfImagingSubmitted", width: 22 },
 
@@ -175,6 +188,33 @@ function exportRoutes(env) {
         { header: "Further Suggested Imaging Investigations", key: "furtherSuggestedImagingInvestigations", width: 34 },
         { header: "Further Suggestions For Management", key: "furtherSuggestionsForManagement", width: 30 },
 
+        ...Array.from({ length: 30 }, (_, i) => ({
+          header: `Post-DIRC QLQ Q${i + 1}`,
+          key: `postQ${i + 1}`,
+          width: 14
+        })),
+        { header: "Post-DIRC QLQ Total", key: "postDircQlqTotal", width: 18 },
+
+        { header: "Post-DIRC ESAS Pain", key: "postEsasPain", width: 16 },
+        { header: "Post-DIRC ESAS Tiredness", key: "postEsasTiredness", width: 18 },
+        { header: "Post-DIRC ESAS Drowsiness", key: "postEsasDrowsiness", width: 18 },
+        { header: "Post-DIRC ESAS Nausea", key: "postEsasNausea", width: 16 },
+        { header: "Post-DIRC ESAS Appetite", key: "postEsasAppetite", width: 16 },
+        { header: "Post-DIRC ESAS Shortness Of Breath", key: "postEsasShortnessOfBreath", width: 24 },
+        { header: "Post-DIRC ESAS Depression", key: "postEsasDepression", width: 18 },
+        { header: "Post-DIRC ESAS Anxiety", key: "postEsasAnxiety", width: 16 },
+        { header: "Post-DIRC ESAS Wellbeing", key: "postEsasWellbeing", width: 18 },
+        { header: "Post-DIRC ESAS Other Problem", key: "postEsasOtherProblem", width: 20 },
+        { header: "Post-DIRC ESAS Patient Name", key: "postEsasPatientName", width: 24 },
+        { header: "Post-DIRC ESAS Date", key: "postEsasDate", width: 18 },
+        { header: "Post-DIRC ESAS Time", key: "postEsasTime", width: 16 },
+        { header: "Post-DIRC Completed By Patient", key: "postCompletedByPatient", width: 24 },
+        { header: "Post-DIRC Completed By Family Caregiver", key: "postCompletedByFamilyCaregiver", width: 32 },
+        { header: "Post-DIRC Completed By Healthcare Professional Caregiver", key: "postCompletedByHealthcareProfessionalCaregiver", width: 40 },
+        { header: "Post-DIRC Body Diagram Notes", key: "postBodyDiagramNotes", width: 36 },
+        { header: "Post-DIRC ESAS Total", key: "postDircEsasTotal", width: 18 },
+        { header: "Post-DIRC Active Symptoms", key: "postDircActiveSymptoms", width: 22 },
+
         { header: "Changes In Primary Treatment", key: "changesInPrimaryTreatment", width: 28 },
         { header: "Changes In Intent Of Treatment", key: "changesInIntentOfTreatment", width: 28 },
         { header: "Assistance In Prognostication Survival Assessment", key: "assistanceInPrognosticationSurvivalAssessment", width: 36 },
@@ -186,9 +226,6 @@ function exportRoutes(env) {
         { header: "Further Imaging Advised What", key: "furtherImagingAdvisedWhat", width: 26 },
         { header: "Goals Of Care Revised Yes No", key: "goalsOfCareRevisedYesNo", width: 24 },
         { header: "Advance Care Planning Discussions", key: "advanceCarePlanningDiscussions", width: 30 },
-
-        { header: "Post Radio Conference QLQ Attached", key: "postQlqAttached", width: 24 },
-        { header: "Post Radio Conference ESAS Attached", key: "postEsasAttached", width: 24 },
 
         { header: "Summary QLQ Overall Pre", key: "summaryQlqOverallPre", width: 22 },
         { header: "Summary QLQ Overall Post", key: "summaryQlqOverallPost", width: 22 },
@@ -205,30 +242,9 @@ function exportRoutes(env) {
       ];
 
       assessments.forEach((a) => {
-        const patient = patients.find(
-          (p) => p._id.toString() === String(a.patientId)
-        );
-
-        const rows = Array.isArray(a.radiologyConference?.rows)
-          ? a.radiologyConference.rows
-          : [];
-
+        const patient = patients.find((p) => p._id.toString() === String(a.patientId));
+        const rows = Array.isArray(a.radiologyConference?.rows) ? a.radiologyConference.rows : [];
         const r = (index) => rows[index] || {};
-
-        const qlqTotal = Array.from({ length: 30 }, (_, i) => a.qlqC30?.[`q${i + 1}`] || 0)
-          .reduce((sum, value) => sum + Number(value || 0), 0);
-
-        const esasTotal =
-          Number(a.esas?.pain || 0) +
-          Number(a.esas?.tiredness || 0) +
-          Number(a.esas?.drowsiness || 0) +
-          Number(a.esas?.nausea || 0) +
-          Number(a.esas?.appetite || 0) +
-          Number(a.esas?.shortnessOfBreath || 0) +
-          Number(a.esas?.depression || 0) +
-          Number(a.esas?.anxiety || 0) +
-          Number(a.esas?.wellbeing || 0) +
-          Number(a.esas?.otherProblem || 0);
 
         sheet.addRow({
           assessmentId: a._id?.toString() || "",
@@ -293,37 +309,10 @@ function exportRoutes(env) {
 
           preConferenceGoalsOfCare: a.preConference?.goalsOfCare || "",
 
-          q1: a.qlqC30?.q1 || "",
-          q2: a.qlqC30?.q2 || "",
-          q3: a.qlqC30?.q3 || "",
-          q4: a.qlqC30?.q4 || "",
-          q5: a.qlqC30?.q5 || "",
-          q6: a.qlqC30?.q6 || "",
-          q7: a.qlqC30?.q7 || "",
-          q8: a.qlqC30?.q8 || "",
-          q9: a.qlqC30?.q9 || "",
-          q10: a.qlqC30?.q10 || "",
-          q11: a.qlqC30?.q11 || "",
-          q12: a.qlqC30?.q12 || "",
-          q13: a.qlqC30?.q13 || "",
-          q14: a.qlqC30?.q14 || "",
-          q15: a.qlqC30?.q15 || "",
-          q16: a.qlqC30?.q16 || "",
-          q17: a.qlqC30?.q17 || "",
-          q18: a.qlqC30?.q18 || "",
-          q19: a.qlqC30?.q19 || "",
-          q20: a.qlqC30?.q20 || "",
-          q21: a.qlqC30?.q21 || "",
-          q22: a.qlqC30?.q22 || "",
-          q23: a.qlqC30?.q23 || "",
-          q24: a.qlqC30?.q24 || "",
-          q25: a.qlqC30?.q25 || "",
-          q26: a.qlqC30?.q26 || "",
-          q27: a.qlqC30?.q27 || "",
-          q28: a.qlqC30?.q28 || "",
-          q29: a.qlqC30?.q29 || "",
-          q30: a.qlqC30?.q30 || "",
-          qlqTotalScore: qlqTotal,
+          ...Object.fromEntries(
+            Array.from({ length: 30 }, (_, i) => [`q${i + 1}`, a.qlqC30?.[`q${i + 1}`] || ""])
+          ),
+          qlqTotalScore: qlqTotal(a.qlqC30),
 
           esasPain: a.esas?.pain || 0,
           esasTiredness: a.esas?.tiredness || 0,
@@ -340,10 +329,10 @@ function exportRoutes(env) {
           esasTime: a.esas?.time || "",
           esasCompletedByPatient: a.esas?.completedBy?.patient ?? false,
           esasCompletedByFamilyCaregiver: a.esas?.completedBy?.familyCaregiver ?? false,
-          esasCompletedByHealthcareProfessionalCaregiver:
-            a.esas?.completedBy?.healthcareProfessionalCaregiver ?? false,
+          esasCompletedByHealthcareProfessionalCaregiver: a.esas?.completedBy?.healthcareProfessionalCaregiver ?? false,
           bodyDiagramNotes: a.esas?.bodyDiagramNotes || "",
-          esasTotalScore: esasTotal,
+          esasTotalScore: esasTotal(a.esas),
+          esasActiveSymptoms: activeSymptoms(a.esas),
 
           numberOfImagingSubmitted: a.radiologyConference?.numberOfImagingSubmitted || "",
 
@@ -386,31 +375,47 @@ function exportRoutes(env) {
           summaryOfFindings: a.radiologyConference?.summaryOfFindings || "",
           implicationsForPatientCare: a.radiologyConference?.implicationsForPatientCare || "",
           doubtsQueriesPutForth: a.radiologyConference?.doubtsQueriesPutForth || "",
-          artefactsNewFindingsPreviouslyMissed:
-            a.radiologyConference?.artefactsNewFindingsPreviouslyMissed || "",
+          artefactsNewFindingsPreviouslyMissed: a.radiologyConference?.artefactsNewFindingsPreviouslyMissed || "",
           newQueriesDoubtsDiscussed: a.radiologyConference?.newQueriesDoubtsDiscussed || "",
-          furtherSuggestedImagingInvestigations:
-            a.radiologyConference?.furtherSuggestedImagingInvestigations || "",
-          furtherSuggestionsForManagement:
-            a.radiologyConference?.furtherSuggestionsForManagement || "",
+          furtherSuggestedImagingInvestigations: a.radiologyConference?.furtherSuggestedImagingInvestigations || "",
+          furtherSuggestionsForManagement: a.radiologyConference?.furtherSuggestionsForManagement || "",
+
+          ...Object.fromEntries(
+            Array.from({ length: 30 }, (_, i) => [`postQ${i + 1}`, a.postDircQlqC30?.[`q${i + 1}`] || ""])
+          ),
+          postDircQlqTotal: qlqTotal(a.postDircQlqC30),
+
+          postEsasPain: a.postDircEsas?.pain || 0,
+          postEsasTiredness: a.postDircEsas?.tiredness || 0,
+          postEsasDrowsiness: a.postDircEsas?.drowsiness || 0,
+          postEsasNausea: a.postDircEsas?.nausea || 0,
+          postEsasAppetite: a.postDircEsas?.appetite || 0,
+          postEsasShortnessOfBreath: a.postDircEsas?.shortnessOfBreath || 0,
+          postEsasDepression: a.postDircEsas?.depression || 0,
+          postEsasAnxiety: a.postDircEsas?.anxiety || 0,
+          postEsasWellbeing: a.postDircEsas?.wellbeing || 0,
+          postEsasOtherProblem: a.postDircEsas?.otherProblem || 0,
+          postEsasPatientName: a.postDircEsas?.patientName || "",
+          postEsasDate: a.postDircEsas?.date || "",
+          postEsasTime: a.postDircEsas?.time || "",
+          postCompletedByPatient: a.postDircEsas?.completedBy?.patient ?? false,
+          postCompletedByFamilyCaregiver: a.postDircEsas?.completedBy?.familyCaregiver ?? false,
+          postCompletedByHealthcareProfessionalCaregiver: a.postDircEsas?.completedBy?.healthcareProfessionalCaregiver ?? false,
+          postBodyDiagramNotes: a.postDircEsas?.bodyDiagramNotes || "",
+          postDircEsasTotal: esasTotal(a.postDircEsas),
+          postDircActiveSymptoms: activeSymptoms(a.postDircEsas),
 
           changesInPrimaryTreatment: a.postConferenceOutcomes?.changesInPrimaryTreatment || "",
           changesInIntentOfTreatment: a.postConferenceOutcomes?.changesInIntentOfTreatment || "",
-          assistanceInPrognosticationSurvivalAssessment:
-            a.postConferenceOutcomes?.assistanceInPrognosticationSurvivalAssessment || "",
-          psychosocialOrSpiritualImplications:
-            a.postConferenceOutcomes?.psychosocialOrSpiritualImplications || "",
+          assistanceInPrognosticationSurvivalAssessment: a.postConferenceOutcomes?.assistanceInPrognosticationSurvivalAssessment || "",
+          psychosocialOrSpiritualImplications: a.postConferenceOutcomes?.psychosocialOrSpiritualImplications || "",
           goalsOfCarePostDIRC: a.postConferenceOutcomes?.goalsOfCarePostDIRC || "",
           changesInManagementYesNo: a.postConferenceOutcomes?.changesInManagementYesNo || "",
           changesInManagementDescribe: a.postConferenceOutcomes?.changesInManagementDescribe || "",
           furtherImagingAdvisedYesNo: a.postConferenceOutcomes?.furtherImagingAdvisedYesNo || "",
           furtherImagingAdvisedWhat: a.postConferenceOutcomes?.furtherImagingAdvisedWhat || "",
           goalsOfCareRevisedYesNo: a.postConferenceOutcomes?.goalsOfCareRevisedYesNo || "",
-          advanceCarePlanningDiscussions:
-            a.postConferenceOutcomes?.advanceCarePlanningDiscussions || "",
-
-          postQlqAttached: a.postRadioConferenceAssessment?.qlqAttached || "",
-          postEsasAttached: a.postRadioConferenceAssessment?.esasAttached || "",
+          advanceCarePlanningDiscussions: a.postConferenceOutcomes?.advanceCarePlanningDiscussions || "",
 
           summaryQlqOverallPre: a.summary?.eortcQlqC30OverallPre || "",
           summaryQlqOverallPost: a.summary?.eortcQlqC30OverallPost || "",

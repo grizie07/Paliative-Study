@@ -1,5 +1,16 @@
 import mongoose from "mongoose";
 
+const imagingRowSchema = new mongoose.Schema(
+  {
+    modality: { type: String, default: "" },
+    partRegion: { type: String, default: "" },
+    yesNo: { type: String, default: "" },
+    date: { type: String, default: "" },
+    findings: { type: String, default: "" }
+  },
+  { _id: false }
+);
+
 const ConferenceRecordSchema = new mongoose.Schema(
   {
     patientId: {
@@ -21,6 +32,12 @@ const ConferenceRecordSchema = new mongoose.Schema(
       type: Date,
       required: true
     },
+
+    imagingRows: {
+      type: [imagingRowSchema],
+      default: []
+    },
+
     imagingModality: {
       type: String,
       default: ""
@@ -33,6 +50,7 @@ const ConferenceRecordSchema = new mongoose.Schema(
       type: String,
       default: ""
     },
+
     clinicalQuestionOrConcern: {
       type: String,
       default: ""

@@ -20,6 +20,25 @@ export default function PatientsPage() {
     }
   };
 
+  const openPostDirc = async (patientId) => {
+    try {
+      const res = await api.get(`/assessments/patient/${patientId}`);
+      const assessments = Array.isArray(res.data) ? res.data : [];
+
+      if (!assessments.length) {
+        alert("Create an assessment first before opening Post-DIRC.");
+        return;
+      }
+
+      const baseline =
+        assessments.find((a) => a.assessmentType === "baseline") || assessments[0];
+
+      navigate(`/assessments/${baseline._id}/post-dirc`);
+    } catch {
+      alert("Failed to open Post-DIRC.");
+    }
+  };
+
   useEffect(() => {
     fetchPatients();
   }, []);
@@ -30,7 +49,7 @@ export default function PatientsPage() {
         title="Patients"
         subtitle="Browse and manage study participants"
         actions={
-          <button className="primary-btn" onClick={() => navigate("/assessment/new")}>
+          <button className="primary-btn" onClick={() => navigate("/patients/new")}>
             <Plus size={18} />
             <span>Add Patient</span>
           </button>
@@ -89,6 +108,9 @@ export default function PatientsPage() {
                         </button>
                         <button className="tiny-btn" onClick={() => navigate(`/patients/${p._id}/assessment/new`)}>
                           Assessment
+                        </button>
+                        <button className="tiny-btn" onClick={() => openPostDirc(p._id)}>
+                          Post-DIRC
                         </button>
                         <button className="tiny-btn" onClick={() => navigate(`/patients/${p._id}/conference/new`)}>
                           Conference
