@@ -140,8 +140,8 @@ export default function Dashboard() {
           </div>
 
           <div className="detail-grid">
-            <div><strong>Total Target:</strong> {target}</div>
-            <div><strong>Completed Patients:</strong> {completed}</div>
+            <div><strong>Sample Size:</strong> {target}</div>
+            <div><strong>No. of Patients recruited:</strong> {completed}</div>
             <div><strong>Remaining Patients:</strong> {remaining}</div>
             <div><strong>Progress:</strong> {progressText}</div>
           </div>

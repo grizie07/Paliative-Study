@@ -1,12 +1,12 @@
 import { FlaskConical, Eye } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   const [form, setForm] = useState({
     email: "",
@@ -16,6 +16,12 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -24,7 +30,7 @@ export default function Login() {
     try {
       const res = await api.post("/auth/login", form);
       login(res.data);
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (err) {
       setError(
         err?.response?.data?.message ||
