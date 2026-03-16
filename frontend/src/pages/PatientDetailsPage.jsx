@@ -134,7 +134,7 @@ export default function PatientDetailsPage() {
                       </button>
                       <button
                         className="tiny-btn"
-                        onClick={() => navigate(`/assessments/${a._id}/post-dirc`)}
+                        onClick={() => navigate(`/assessments/${a._id}/edit?step=6`)}
                       >
                         Post-DIRC
                       </button>

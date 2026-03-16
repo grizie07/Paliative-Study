@@ -27,8 +27,7 @@ api.interceptors.response.use(
       localStorage.removeItem("role");
       localStorage.removeItem("email");
 
-      const currentPath = window.location.pathname;
-      if (currentPath !== "/login") {
+      if (window.location.pathname !== "/login") {
         window.location.href = "/login";
       }
     }

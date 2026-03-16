@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PageHeader from "../components/common/PageHeader";
 import api from "../services/api";
 
@@ -285,12 +285,21 @@ function SectionCard({ title, children }) {
 export default function AssessmentCreatePage() {
   const { id, assessmentId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [form, setForm] = useState(defaultState);
+  const [loadedPatientId, setLoadedPatientId] = useState("");
+
+  useEffect(() => {
+    const stepParam = Number(searchParams.get("step"));
+    if (stepParam >= 1 && stepParam <= 7) {
+      setStep(stepParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const loadAssessment = async () => {
@@ -302,6 +311,11 @@ export default function AssessmentCreatePage() {
       try {
         const res = await api.get(`/assessments/${assessmentId}`);
         const a = res.data;
+
+        const patientRef =
+          typeof a.patientId === "object" ? a.patientId?._id : a.patientId;
+
+        setLoadedPatientId(patientRef || "");
 
         setForm((prev) => ({
           ...prev,
@@ -466,7 +480,7 @@ export default function AssessmentCreatePage() {
     setSubmitError("");
 
     try {
-      let patientId = id;
+      let patientId = id || loadedPatientId;
 
       if (!patientId && !assessmentId) {
         const patientPayload = {
@@ -516,7 +530,7 @@ export default function AssessmentCreatePage() {
 
       if (assessmentId) {
         await api.patch(`/assessments/${assessmentId}`, assessmentPayload);
-        navigate(`/patients/${patientId || id}`);
+        navigate(`/patients/${patientId}`);
       } else {
         await api.post("/assessments", assessmentPayload);
         navigate(`/patients/${patientId}`);

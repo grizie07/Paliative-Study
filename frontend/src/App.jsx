@@ -10,7 +10,6 @@ import PatientCreatePage from "./pages/PatientCreatePage";
 import PatientDetailsPage from "./pages/PatientDetailsPage";
 import AssessmentCreatePage from "./pages/AssessmentCreatePage";
 import ConferenceCreatePage from "./pages/ConferenceCreatePage";
-import PostDircAssessmentPage from "./pages/PostDircAssessmentPage";
 import ExportPage from "./pages/ExportPage";
 
 function ShellPage({ children }) {
@@ -37,7 +36,7 @@ export default function App() {
 
           <Route path="/patients/:id/assessment/new" element={<ShellPage><AssessmentCreatePage /></ShellPage>} />
           <Route path="/assessments/:assessmentId/edit" element={<ShellPage><AssessmentCreatePage /></ShellPage>} />
-          <Route path="/assessments/:assessmentId/post-dirc" element={<ShellPage><PostDircAssessmentPage /></ShellPage>} />
+          
 
           <Route path="/patients/:id/conference/new" element={<ShellPage><ConferenceCreatePage /></ShellPage>} />
           <Route path="/conference-records/:conferenceId/edit" element={<ShellPage><ConferenceCreatePage /></ShellPage>} />

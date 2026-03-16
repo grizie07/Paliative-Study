@@ -19,7 +19,7 @@ export default function ExportPage() {
 
       <div className="panel export-panel">
         <p className="export-text">
-          This downloads the full study dataset using the existing backend export route.
+          This downloads the full study dataset in Excel format. It includes all patients, assessments, and conference records with their respective details. 
         </p>
 
         <button className="primary-btn" onClick={handleExport}>

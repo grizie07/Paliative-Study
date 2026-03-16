@@ -33,7 +33,7 @@ export default function PatientsPage() {
       const baseline =
         assessments.find((a) => a.assessmentType === "baseline") || assessments[0];
 
-      navigate(`/assessments/${baseline._id}/post-dirc`);
+      navigate(`/assessments/${baseline._id}/edit?step=6`);
     } catch {
       alert("Failed to open Post-DIRC.");
     }
