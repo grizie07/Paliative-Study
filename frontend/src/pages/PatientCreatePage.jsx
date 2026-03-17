@@ -88,14 +88,14 @@ export default function PatientCreatePage() {
               <label>Primary Diagnosis</label>
               <input value={form.primaryDiagnosis} onChange={(e) => update("primaryDiagnosis", e.target.value)} />
             </div>
-            <div className="form-field">
+            {/* <div className="form-field">
               <label>Diagnosis Date</label>
               <input type="date" value={form.diagnosisDate} onChange={(e) => update("diagnosisDate", e.target.value)} />
             </div>
             <div className="form-field">
               <label>Cancer Stage</label>
               <input value={form.cancerStage} onChange={(e) => update("cancerStage", e.target.value)} />
-            </div>
+            </div> */}
           </div>
         </div>
 

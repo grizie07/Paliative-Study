@@ -90,8 +90,6 @@ export default function PatientDetailsPage() {
           <div><strong>Religion:</strong> {patient.religion}</div>
           <div><strong>Phone Number:</strong> {patient.phoneNumber}</div>
           <div><strong>Diagnosis:</strong> {patient.primaryDiagnosis}</div>
-          <div><strong>Diagnosis Date:</strong> {patient.diagnosisDate}</div>
-          <div><strong>Stage:</strong> {patient.cancerStage}</div>
           <div><strong>Consent Given:</strong> {String(patient.consentGiven)}</div>
         </div>
       </div>
