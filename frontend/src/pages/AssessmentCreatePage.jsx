@@ -218,16 +218,18 @@ const defaultState = {
   esas: { ...defaultEsas },
 
   radiologyConference: {
-    numberOfImagingSubmitted: "",
-    rows: [{ ...emptyConferenceRow }],
-    summaryOfFindings: "",
-    implicationsForPatientCare: "",
-    doubtsQueriesPutForth: "",
-    artefactsNewFindingsPreviouslyMissed: "",
-    newQueriesDoubtsDiscussed: "",
-    furtherSuggestedImagingInvestigations: "",
-    furtherSuggestionsForManagement: ""
-  },
+  numberOfImagingSubmitted: "",
+  rows: [{ ...emptyConferenceRow }],
+  summaryOfFindings: "",
+  implicationsForPatientCare: "",
+  doubtsQueriesPutForth: "",
+  imagingVsClinicalFindings: "",
+  detailedDiscussion: "",
+  artefactsNewFindingsPreviouslyMissed: "",
+  newQueriesDoubtsDiscussed: "",
+  furtherSuggestedImagingInvestigations: "",
+  furtherSuggestionsForManagement: ""
+},
 
   postDircQlqC30: Object.fromEntries(
     Array.from({ length: 30 }, (_, i) => [`q${i + 1}`, 1])
