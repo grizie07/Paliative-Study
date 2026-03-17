@@ -17,9 +17,7 @@ function createApp(env) {
 
   const allowedOrigins = [
     "http://localhost:5173",
-    "https://paliative-study.vercel.app",
-    "https://paliative-study-git-main-grizie07s-projects.vercel.app",
-    "https://paliative-study-hy619hm23-grizie07s-projects.vercel.app"
+    "https://paliative-study.vercel.app/"
   ];
 
   if (env.CORS_ORIGIN) {
